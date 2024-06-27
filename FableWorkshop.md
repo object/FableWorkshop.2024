@@ -71,3 +71,91 @@ Build and run the app. Navigate to http://localhost:5000/api/files in the browse
 
 ### Further reading
 To learn more of Saturn framework, check its [Web site](https://saturnframework.org/tutorials/how-to-start.html). [SAFE Dojo project](https://github.com/CompositionalIT/SAFE-Dojo) is a great example of how it can be used to develop Web applications and services in F#.
+
+## 3. Retrieving file content using HTTP requests in a Fable app
+To teach our Fable app how to execute HTTP requests we first need to add a new Nuget package to it. Run the following command from a Terminal:
+```
+dotnet add src/Client/Client.fsproj package Fable.SimpleHttp
+```
+While we are adding packages we will ensure that packages added by SAFE template are up-to-date, so run the following commands:
+```
+dotnet add src/Client/Client.fsproj package Fable.Core
+dotnet add src/Client/Client.fsproj package Fable.Browser.DOM
+dotnet add src/Client/Client.fsproj package Fable.Fetch
+```
+To display the content of HTTP responses we will need to add a view with some HTML. Fable has several viable options, in this workshop we will be using React. So we need to add a few more packages:
+```
+dotnet add src/Client/Client.fsproj package Fable.React
+dotnet add src/Client/Client.fsproj package Fable.Elmish
+dotnet add src/Client/Client.fsproj package Fable.Elmish.React
+```
+Finally, we will be using Thoth serializer (that has already been added to the Server app), so one more package to add:
+```
+dotnet add src/Client/Client.fsproj package Thoth.Fetch
+```
+
+Remember that our application uses two sets of packages: F# and JavaScript (NPM) libraries. So if we added dependency on React to our F# UI code, we need to update NPM packages accordingly:
+```
+npm add react
+npm add react-dom
+```
+
+We can no longer fit all application code in one file, so we will split `Client.fs` into `App.fs` and `Index.fs`. Edit Client project file so it now contains the following ItemGroup:
+```
+    <ItemGroup>
+        <None Include="index.html" />
+        <Compile Include="Index.fs" />
+        <Compile Include="App.fs" />
+        <TypeScriptCompile Include="vite.config.mts" />
+    </ItemGroup>
+```
+
+Edit `src/Client/Index.html` and replace reference to `client.fs.js` with `app.fs.js` (which contains an entry point to our application).
+
+Now add a new F# source file `src/Client/Index.fs` with the content of this [gist](https://gist.github.com/object/b6846e1881e058e017b12d16256fff4e). Rename `Client.fs` and paste the following content (or copy from this [gist](https://gist.github.com/object/6d9d91a64ba784fad55b8efae6924822)):
+
+```
+module App
+
+open Elmish
+open Elmish.React
+
+Program.mkProgram Index.init Index.update Index.view
+|> Program.withReactSynchronous "elmish-app"
+|> Program.run
+```
+
+Start both the server and client, write `SingleProgram.txt` and chances are big that you will not get a result. If you open Chrome DevTools console, you will see the following message:
+
+>Access to XMLHttpRequest at 'http://localhost:5000/SingleProgram.txt' from origin 'http://localhost:8080' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+
+To resolve the error, import Microsoft.AspNetCore.Cors.Infrastructure namespace in `src/Server/Server.fs`:
+```
+open Microsoft.AspNetCore.Cors.Infrastructure
+```
+Add `configureCors` function after `webApp` definition:
+```
+let configureCors (builder : CorsPolicyBuilder) =
+    builder
+        .WithOrigins("http://localhost:8080")
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+    |> ignore
+```
+Finally call it in the `application` computational expression, so the `app` declaration will look like this:
+```
+let app =
+    application {
+        url "http://0.0.0.0:5000"
+        use_router webApp
+        memory_cache
+        use_static "public"
+        use_json_serializer (Thoth.Json.Giraffe.ThothSerializer())
+        use_gzip
+        use_cors "CORS_policy" configureCors
+    }
+```
+Now you should be able to see the content of the file in your Fable app.
+
+### Inspect how asynchronous HTTP requests are handled in Fable Elmish
+While the Fable app is so small with most of its implementation fitting in a single file `Index.fs` it's easy to grasp and idea of underlying Elm architecture. Check the function signatures of `init`, `update` and `view`, also use of `async` computational expression in `loadEvents`. You can read more about semantics of `Cmd.OfAsync.either`, `Cmd.OfAsync.perform`, `Cmd.OfAsync.attempt` and `Cmd.OfAsync.result` in [this StackOverflow discussion](https://stackoverflow.com/questions/57619894/return-async-value-from-fable-remoting).
