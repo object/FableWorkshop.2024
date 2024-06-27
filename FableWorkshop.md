@@ -203,3 +203,15 @@ let delayMessage msg delay state =
     state, Cmd.ofEffect delayedMsg
 ```
 Note use of a new command `Cmd.ofEffect` that enables use of subscriptions to future messages.
+
+## 5. Replacing direct calls to Fable.React with Feliz
+This stage is a relatively minor refactoring to improve the `view` implementation code style (opinion detected).
+
+Add a reference to Feliz package:
+```
+dotnet add src/Client/Client.fsproj package Feliz
+```
+Replace `src/Client/View.fs` with an [updated version](https://gist.github.com/object/4d63244768664579ca67982bb92474a1) based on Feliz.
+
+### Further reading
+Read a great comparison by Maxime Mangel [My journey with Feliz | A comparison between Fable.React and Feliz](https://github.com/Zaid-Ajaj/Feliz/issues/155)
