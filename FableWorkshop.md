@@ -385,3 +385,23 @@ Run both Server and Client, and you should see Server events displayed in the Cl
 
 ### Further reading
 `Elmish.Bridge` also supports broadcasting messages to all connected socket clients using `ServerHub`. Refer to its [documentation](https://github.com/Nhowka/Elmish.Bridge) for more details.
+
+## 9. Adding live tiles
+While displaying live events using Web socket is sufficient to demonstrate how subscriptions work in an Elmish application, we can improve the quality of visual presentation of server activities by adding representation of some stateful data. We will extend the Client UI with live tiles that show states of media sets being uploaded.
+
+The Server and Shared projects are done - all DTO and sockets messages are already defined. We need to teach the Client how to use `MediaSetState` information, until now it has only been showing `MediaSetEvent` data.
+
+We will begin with `Msg` type in `Messages` module. Rename `MediaSetEvent` case to `RemoteEvent` to generalize the name (use F2 to rename all occurences in the project). Make sure that it is renamed in `App.fs`, so `Elmish.Bridge` mapping looks like this:
+```
+|> Bridge.withMapping (fun (x : Shared.Sockets.ClientMessage) -> x |> Messages.RemoteEvent))
+```
+Add a new message case to `Msg` after `RemoteEvent`. This one will be used to implement blinking of tiles before they disappear from the dashboard:
+```
+    | RemoveCountdown of string
+```
+Client's Model, Update and View modules require bigger changes, so it's easier to download complete gists:
+- [Model.fs](https://gist.github.com/object/da015a1a117d290a175eaed9924cf7ec)
+- [Update.fs](https://gist.github.com/object/48f964379a910825a1a17fe312f6a407)
+- [View.fs](https://gist.github.com/object/6de266a5fad672b83e65e64ebbed87d2)
+
+Rebuild the client application (the server is probably already running) and you can monitor state changes of TV and Radio media sets.
