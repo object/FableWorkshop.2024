@@ -54,3 +54,20 @@ After the client application is built, go to http://localhost:8080 and you shoul
 
 ### Inspect the project files
 Browse project files, all essential client code resides in `Client/Index.fs` while the whole server is implemented in `Server/Server.fs`. The `Shared` folder contains definitions that are common for both applications.
+
+## 2. Serving the content of a file from a Saturn Web service
+We will now modify our Server app to serve file content. First, open `src/Shared/Shared.fs` file and add a new route to module `Route` so it will look like this:
+```
+module Route =
+    let hello = "/api/hello"
+    let files = "/api/files"
+```
+Now we need to modify our server. Replace the content of `src/Server/Server.fs` with the one from this [gist](https://gist.github.com/object/72c91ecbc2f82b6402d231a61d46fdea). The code refers ThothSerializer so we need to add its Nuget package to the project:
+```
+dotnet add src/Server/Server.fsproj package Thoth.Json.Giraffe
+```
+
+Build and run the app. Navigate to http://localhost:5000/api/files in the browser. Now it only shows an empty list. We will create a couple of files that we will later use in the project and place them in server's public folder. [This gist](https://gist.github.com/object/e77cfc2a1956b318dcff60a4bdb9db5c) contains files `SingleProgram.txt` and `MultiplePrograms.txt`. Create files with these names in `src/Server/public` folder and paste the respective content. Go to http://localhost:5000/api/files/SingleProgram.txt, you should get the content of a file.
+
+### Further reading
+To learn more of Saturn framework, check its [Web site](https://saturnframework.org/tutorials/how-to-start.html). [SAFE Dojo project](https://github.com/CompositionalIT/SAFE-Dojo) is a great example of how it can be used to develop Web applications and services in F#.

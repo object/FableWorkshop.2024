@@ -13,5 +13,6 @@
   <ItemGroup>
     <PackageReference Include="Saturn" Version="0.16.1" />
     <PackageReference Update="FSharp.Core" Version="8.0.100" />
+    <PackageReference Include="Thoth.Json.Giraffe" Version="6.0.0" />
   </ItemGroup>
 </Project>
