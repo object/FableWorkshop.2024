@@ -137,7 +137,7 @@ Add `configureCors` function after `webApp` definition:
 ```
 let configureCors (builder : CorsPolicyBuilder) =
     builder
-        .WithOrigins("http://localhost:5000")
+        .WithOrigins("http://localhost:8080")
         .AllowAnyMethod()
         .AllowAnyHeader()
     |> ignore
