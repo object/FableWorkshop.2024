@@ -316,3 +316,73 @@ Html.tr [
 ]
 ```
 But we are still cheating: event data are still loaded at once from a text file instead of subscribing to them in the `Server` app. This will be taken care of in the next stage.
+
+## 8. Implementing event subscriptions using Web sockets
+It's been a long since we needed to change anything in the `Server` project, but the change is coming and the change is big: adding Web socket support.
+
+Our server needs to new Nuget packages. So run the following commands:
+```
+dotnet add src/Server/Server.fsproj package Elmish.Bridge.Giraffe
+dotnet add src/Server/Server.fsproj package Thoth.Json.Net
+```
+
+The `src/Shared/Shared.fs` is still growing. There will be a new route:
+```
+module Route =
+    let hello = "/api/hello"
+    let files = "/api/files"
+    let socket = "/socket"
+```
+And a new module `Sockets` with definitions of commands sent from the Client to Server app:
+```
+module Sockets =
+    type ClientCommand =
+        | Connect
+        | LoadMessages of filename:string
+        | SetPlaybackDelay of int
+        | StartPlayback
+        | PausePlayback
+        | StopPlayback
+
+    type ClientMessage = Dto.Activity
+```
+Full version of `src/Shared/Shared.fs` can be downloaded [here](https://gist.github.com/object/3023171d7f5def72b5d43675f6812a0a).
+
+We will also split `Server.fs` into `WebServer.fs` and `SocketServer.fs` for better separation of concerns. First rename `src/Server/Server.fs` to `src/Server/WebServer.fs`. Then add a file `src/Server/SocketServer.fs`. Copy the content of these files from the following gists:
+- [WebServer.fs](https://gist.github.com/object/2699c9aabc7dbae335951a225b645ea9)
+- [SocketServer.fs](https://gist.github.com/object/a0d5b1ab47f12debedfc23a5c6017aba)
+
+Now edit the content of `src/Server/Server.fsproj` and update its source files:
+```
+  <ItemGroup>
+    <Compile Include="SocketServer.fs" />
+    <Compile Include="WebServer.fs" />
+  </ItemGroup>
+```
+Now add new Nuget package to the Client app:
+```
+dotnet add src/Client/Client.fsproj package Elmish.Bridge.Client
+```
+You may need to reload project window to synchronize changes with Ionide.
+
+Time to update Client code. Begin with `App` module by importing `Elmish.Bridge` namespace and adding a reference to Elmish Bridge after the `mkProgram` call:
+```
+Program.mkProgram init update view
+|> Program.withBridgeConfig (
+    Bridge.endpoint "ws://localhost:8085/socket"     
+    |> Bridge.withUrlMode Raw
+    |> Bridge.withMapping (fun (x : Shared.Sockets.ClientMessage) -> x |> Messages.MediaSetEvent))
+```
+Full version of `App.fs` can be obtained from [this gist](https://gist.github.com/object/c8b909a73d07d3b3a8fb4814123f77e8).
+
+Other Client modules also need big revisions because we will no longer read whole files from the Server: all Server events will be sent one by one via Web socket channel. Replace other Client files with updated versions:
+- [Model.fs](https://gist.github.com/object/136a40c85cd0f66b124416815c79a1c2)
+- [Messages.fs](https://gist.github.com/object/6e821c66172448927a22b5cfde5441a1)
+- [Update.fs](https://gist.github.com/object/e724fac0d205a238d72ba1f02ec38973)
+- [View.fs](https://gist.github.com/object/c44914748ee9d9449b3f4132fc30f479)
+
+Run both Server and Client, and you should see Server events displayed in the Client app.
+
+### Further reading
+`Elmish.Bridge` also supports broadcasting messages to all connected socket clients using `ServerHub`. Refer to its [documentation](https://github.com/Nhowka/Elmish.Bridge) for more details.
+

@@ -5,14 +5,17 @@
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Server.fs" />
+    <Compile Include="SocketServer.fs" />
+    <Compile Include="WebServer.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Elmish.Bridge.Giraffe" Version="7.0.0" />
     <PackageReference Include="Saturn" Version="0.16.1" />
     <PackageReference Update="FSharp.Core" Version="8.0.100" />
     <PackageReference Include="Thoth.Json.Giraffe" Version="6.0.0" />
+    <PackageReference Include="Thoth.Json.Net" Version="12.0.0" />
   </ItemGroup>
 </Project>
