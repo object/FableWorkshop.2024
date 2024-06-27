@@ -269,3 +269,50 @@ Now you should see a CSS-powered version of the Client app that uses Bulma CSS a
 
 ### Further reading
 Bulma has an [excellent documentation](https://bulma.io/documentation/) with various examples. [Font Awesome](https://fontawesome.com/) has a free version that we are using for our Fable app but also a much larger paid set of fonts. And if for some reasons you are not satisfied with using Bulma in combination with F# CSS type provider, there is a Bulma F# wrapper called [Fulma](https://fulma.github.io/Fulma/) written and maintained by Maxime Mangel.
+
+## 7. From file lines player to events player
+Now that we have equipped ourselves with a great CSS and awesome fonts, we can display the content of files as what it actually represents - a series of domain events recorded while uploading media files to CDN providers. This is the important step on the way to typed communication betwen client and server.
+
+We begin with extending the content of `src/Shared` with a new module `Dto`. The revised version can be found in [this gist](https://gist.github.com/object/765023f6441cca8ac5eb30e7148286e8).
+
+You may need to run `dotnet fable src/Client --noCache` to ensure `Shared` project is compiled and reload the projects in Visual Studio Code to make Ionide catch up with the changes.
+
+Now update `src/Client/Model.fs` by importing `Shared` namespace and changing type of `Events` property from string array to `Dto.MediaSetEvent array` so the `Model` type looks like this:
+```
+type Model = 
+    { EventSet: EventSet 
+      PlaybackDelay : int
+      IsPlaying : bool
+      Events : Dto.MediaSetEvent array
+      EventIndex : int
+      Error : string }
+    static member Empty = 
+        { EventSet = EventSet.Small
+          PlaybackDelay = 2000
+          IsPlaying = false
+          Events = Array.empty
+          EventIndex = -1
+          Error = "" }
+```
+Both `Update` and `View` client modules need to new revisions too. They can be updated from [`Update.fs`](https://gist.github.com/object/dbcaa2b4a093ca495d82916ad969b0de) and [`View.fs`](https://gist.github.com/object/6008f718c486eb409a5463b321837c6e) gists.
+
+### Checkout the essential changes
+The most important change to `Update` module is that the text strings that earlier were displayed directly are now parsed and filtered by `MediaSetEvent` type:
+```
+let selectFileAndSubtitlesEvents activities =
+    activities
+    |> Seq.map (Decode.Auto.fromString<Dto.Activity>)
+    |> Seq.choose (fun x -> match x with Ok (Dto.Activity.MediaSetEvent x) -> Some x | _ -> None)
+    |> Seq.choose (fun x -> match x with | Dto.StatusUpdate _ -> None | _ -> Some x)
+```
+With that in place it is now possible to proper format `MediaSetEvent` rows in the `View` `showEvent` function:
+```
+Html.tr [
+    Html.td [prop.className color; prop.children [icon]]
+    Html.td [prop.className color; prop.text (mediaSetId.ToUpper())]
+    Html.td [prop.className color; prop.text (provider.Substring(0,1))]
+    Html.td [prop.className color; prop.text (quality)]
+    Html.td [prop.className color; prop.text (timestamp.ToString(TimeFormatString))]
+]
+```
+But we are still cheating: event data are still loaded at once from a text file instead of subscribing to them in the `Server` app. This will be taken care of in the next stage.
