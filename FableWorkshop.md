@@ -200,6 +200,6 @@ let delayMessage msg delay state =
         dispatch msg
       }
       Async.StartImmediate delayedDispatch
-    state, Cmd.ofSub delayedMsg
+    state, Cmd.ofEffect delayedMsg
 ```
-Note use of a new command `Cmd.ofSub` that enables use of subscriptions to future messages.
+Note use of a new command `Cmd.ofEffect` that enables use of subscriptions to future messages.
