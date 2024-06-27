@@ -159,3 +159,47 @@ Now you should be able to see the content of the file in your Fable app.
 
 ### Inspect how asynchronous HTTP requests are handled in Fable Elmish
 While the Fable app is so small with most of its implementation fitting in a single file `Index.fs` it's easy to grasp and idea of underlying Elm architecture. Check the function signatures of `init`, `update` and `view`, also use of `async` computational expression in `loadEvents`. You can read more about semantics of `Cmd.OfAsync.either`, `Cmd.OfAsync.perform`, `Cmd.OfAsync.attempt` and `Cmd.OfAsync.result` in [this StackOverflow discussion](https://stackoverflow.com/questions/57619894/return-async-value-from-fable-remoting).
+
+## 4. Implementing playback of individual lines of a file
+The funcionality of your Fable app will get more complex and will be too big for a single `Index.fs` file. It's time to place model types, message types, event handler and HTML generation in separate modules.
+
+Create new files in `src/Client` folder: `Model.fs`, `Messages.fs`, `Update.fs` and `View.fs`. Edit `src/Client/Client.fsproj` file, remote `Index.fs` and add references to these files. Remember that file order is important in F# projects, so make sure they are added in the following order:
+```
+    <ItemGroup>
+        <None Include="index.html" />
+        <Compile Include="Model.fs" />
+        <Compile Include="Messages.fs" />
+        <Compile Include="Update.fs" />
+        <Compile Include="View.fs" />
+        <Compile Include="App.fs" />
+        <TypeScriptCompile Include="vite.config.mts" />
+    </ItemGroup>
+```
+Fill the content of the newly added files from the following gists:
+- [Model.fs](https://gist.github.com/object/3fbf9d8351537aac6caeed18900acaed)
+- [Messages.fs](https://gist.github.com/object/9bc548b22bd9a968638a97c7a63769a4)
+- [Update.fs](https://gist.github.com/object/1f25eca7af9d64c1a00f7d950e4ba704)
+- [View.fs](https://gist.github.com/object/f6fa38fbda41efab1c1c86db8b698a2a)
+
+You should also edit App.fs to open `Update` and `View` modules and modify `mkProgram` arguments (or copy code from this [gist](https://gist.github.com/object/55836c579f13d81e6ab915b1c7b142de)):
+```
+open Update
+open View
+...
+Program.mkProgram init update view
+```
+Most likely you won't need to reload the project and Ionide plugin will catch up with the new project structure. If not, execute `Reload Window` command in Visual Studio Code.
+
+### Inspect execution of delayed messages
+The major change from the previous implementation is that upload loading a file it's split into individual lines which are asynchronously sent to the `update` message handler. Here's the essential code to achive that:
+```
+let delayMessage msg delay state =
+    let delayedMsg (dispatch : Msg -> unit) : unit =
+      let delayedDispatch = async {
+        do! Async.Sleep delay
+        dispatch msg
+      }
+      Async.StartImmediate delayedDispatch
+    state, Cmd.ofSub delayedMsg
+```
+Note use of a new command `Cmd.ofSub` that enables use of subscriptions to future messages.
