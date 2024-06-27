@@ -215,3 +215,57 @@ Replace `src/Client/View.fs` with an [updated version](https://gist.github.com/o
 
 ### Further reading
 Read a great comparison by Maxime Mangel [My journey with Feliz | A comparison between Fable.React and Feliz](https://github.com/Zaid-Ajaj/Feliz/issues/155)
+
+## 6. Adding Bulma CSS and FontAwesome to a Fable app
+Getting bored of how your Fable app looks? Time to make it nicer.
+
+Until now we didn't have to worry about `index.html` in `src/Client` folder, but this is where we import CSS, so now it's time. Open it and remove a line with a reference to `favicon.png` that will no longer be used, you can also delete the icon file from `src/Client`. Now add the following lines after `meta` element (just before the closing `head` tag):
+```
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.0/css/bulma.min.css"/>
+    <script src="https://kit.fontawesome.com/409fb4cc7a.js" crossorigin="anonymous"></script>
+```
+You will find the content of the updated `index.html` in this [gist](https://gist.github.com/object/8ca4220cc0bb20b03e2e34259a3c2ee7)
+Accessing CSS element by writing magic strings is not in the mood of an F# application, so we will add CSS F# type provider to generate types for CSS elements. First add two Nuget packages to the Client project:
+```
+dotnet add src/Client/Client.fsproj package Zanaptak.TypedCssClasses
+dotnet add src/Client/Client.fsproj package Feliz.Bulma
+```
+Add a new file `Styles.fs` in `src/Client` folder with the following content:
+```
+[<AutoOpen>]
+module AppStyles
+
+open Zanaptak.TypedCssClasses
+
+// Bulma classes
+type Bulma = CssClasses<"https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.0/css/bulma.min.css", Naming.PascalCase>
+
+// Font-Awesome classes
+type FA = CssClasses<"https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css", Naming.PascalCase>
+```
+Add a reference to Styles.fs to a project file src/Client/Client.fsproj right after the reference to `index.html` so it will be included before other F# source files:
+```
+<Compile Include="Styles.fs" />
+```
+Modify file `src/Client/Messages.fs` by replacing `Msg` case `FilenameChanged of string` with `EventSetChanged of string`, so the new definition looks like this:
+```
+type Msg =
+    | EventSetChanged of string
+    | PlaybackDelayChanged of string
+    | StartPlayback
+    | PausePlayback
+    | StopPlayback
+    | NextEvent
+    | EventsLoaded of string
+    | EventsError of exn
+    | Delayed of Msg * delay:int
+```
+Replace `Client` `Model`, `Update` and `View` module files with the following files:
+- [Model.fs](https://gist.github.com/object/7dfa33bf17be3638d06b0a008c648f44)
+- [Update.fs](https://gist.github.com/object/e7b6253b08babda208f2f04e954f1e80)
+- [View.fs](https://gist.github.com/object/89ac556fbca438df6c97afb279b2a05d)
+
+Now you should see a CSS-powered version of the Client app that uses Bulma CSS and FontAwesome.
+
+### Further reading
+Bulma has an [excellent documentation](https://bulma.io/documentation/) with various examples. [Font Awesome](https://fontawesome.com/) has a free version that we are using for our Fable app but also a much larger paid set of fonts. And if for some reasons you are not satisfied with using Bulma in combination with F# CSS type provider, there is a Bulma F# wrapper called [Fulma](https://fulma.github.io/Fulma/) written and maintained by Maxime Mangel.
