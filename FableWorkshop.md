@@ -405,3 +405,30 @@ Client's Model, Update and View modules require bigger changes, so it's easier t
 - [View.fs](https://gist.github.com/object/6de266a5fad672b83e65e64ebbed87d2)
 
 Rebuild the client application (the server is probably already running) and you can monitor state changes of TV and Radio media sets.
+
+## 10. Enable Elmish debugger using Redux DevTools (optional step)
+
+If you get stuck with an error, it may help to check out internal state of the application. Thanks to Fable compiler that converts F# code to JavaScript, you can use Redux DevTools Chrome extension and even its time-travelling debugger to inspect the state of your Fable Elmish application and playback its activities. First, execute from the Terminal the following commands:
+
+```
+npm add remotedev -D
+dotnet add src/App.fsproj package Fable.Elmish.Debugger
+```
+
+Now edit `App.fs`:
+
+After the line that imports `Elmish.React` namespace add the line `open Elmish.Debug`
+After the line that configures `Program.withReactSynchronous` add the line: `|> Program.withDebugger`
+
+Edit `index.html` and after the line that specifies a `div` with `elmish-app` add the following script:
+```
+<script type="text/javascript">
+    var global = global || window;
+</script>
+```
+
+Restart the client application. Go the Web page, press F12 to activate Chrome development tools. Find among its tabs a tab called "Redux", Switch between tabs `Action` and `State`, and you should see messages handled by the application as defined in `Messages.fs` file and application state with properties as defined in `Model.fs`.
+
+
+### Further reading
+Refer to [this](https://elmish.github.io/debugger/) article to learn more about Elmish debugger. [This page](https://github.com/zalmoxisus/remotedev) contains information about RemoteDev and Redux development tools.
