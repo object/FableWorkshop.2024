@@ -412,7 +412,7 @@ If you get stuck with an error, it may help to check out internal state of the a
 
 ```
 npm add remotedev -D
-dotnet add src/App.fsproj package Fable.Elmish.Debugger
+dotnet add src/Client/Client.fsproj package Fable.Elmish.Debugger
 ```
 
 Now edit `App.fs`:
