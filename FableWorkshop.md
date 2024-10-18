@@ -110,7 +110,10 @@ We can no longer fit all application code in one file, so we will split `Client.
     </ItemGroup>
 ```
 
-Edit `src/Client/Index.html` and replace reference to `client.fs.js` with `app.fs.js` (which contains an entry point to our application).
+Edit `src/Client/Index.html` and replace reference to `client.fs.js` with `app.fs.js` (which contains an entry point to our application). It also needs a div with "elmish-app" id:
+```
+<div id="elmish-app"></div>
+```
 
 Now add a new F# source file `src/Client/Index.fs` with the content of this [gist](https://gist.github.com/object/b6846e1881e058e017b12d16256fff4e). Rename `Client.fs` and paste the following content (or copy from this [gist](https://gist.github.com/object/6d9d91a64ba784fad55b8efae6924822)):
 
