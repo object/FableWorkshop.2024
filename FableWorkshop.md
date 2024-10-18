@@ -110,7 +110,7 @@ We can no longer fit all application code in one file, so we will split `Client.
     </ItemGroup>
 ```
 
-Edit `src/Client/Index.html` and replace reference to `client.fs.js` with `app.fs.js` (which contains an entry point to our application). It also needs a div with "elmish-app" id:
+Edit `src/Client/Index.html` and replace reference to `client.fs.js` with `app.fs.js` (which contains an entry point to our application). It also needs a `div` with "elmish-app" id after the opening `body` element:
 ```
 <div id="elmish-app"></div>
 ```
